@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
+// import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -28,7 +29,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
    * This can be reduced to cap the robot's maximum speed. Typically, this is useful during initial testing of the robot.
    */
   public static final double MAX_VOLTAGE = 12.0;
-  // FIXME Measure the drivetrain's maximum velocity or calculate the theoretical.
   //  The formula for calculating the theoretical maximum velocity is:
   //   <Motor free speed RPM> / 60 * <Drive reduction> * <Wheel diameter meters> * pi
   //  By default this value is setup for a Mk4 standard module using Falcon500s to drive.
@@ -97,7 +97,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     // By default we will use Falcon 500s in standard configuration. But if you use a different configuration or motors
     // you MUST change it. If you do not, your code will crash on startup.
-    // FIXME Setup motor configuration
     m_frontLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
             // This parameter is optional, but will allow you to see the current state of the module on the dashboard.
             tab.getLayout("Front Left Module", BuiltInLayouts.kList)

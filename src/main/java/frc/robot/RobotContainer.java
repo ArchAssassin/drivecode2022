@@ -78,6 +78,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+   /*
     // 1. Trajectory Settings
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
      Constants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DrivetrainSubsystem.m_kinematics);
@@ -106,14 +107,19 @@ public class RobotContainer {
                 xController,
                 yController,
                 thetaController,
-                DrivetrainSubsystem::setModuleStates, //FIXME help
+                DrivetrainSubsystem::setModuleStates, //FIXME Doesnt exist 
                 DrivetrainSubsystem); // this is fine, dont edit this line
 
       // 5. returns everything
       return new SequentialCommandGroup(
         new InstantCommand(() -> DrivetrainSubsystem.resetOdometry(trajectory.getInitialPose()) // i dont think this is actually broken?
         swerveControllerCommand,
-        new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  } //FIXME doesnt exist
+        new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  //FIXME doesnt exist
+      */
+
+      return null;
+      } 
+
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

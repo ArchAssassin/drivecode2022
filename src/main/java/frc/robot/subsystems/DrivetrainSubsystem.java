@@ -16,11 +16,12 @@ import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
-// import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.trajectory.Trajectory.State;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static frc.robot.Constants.*;
@@ -182,6 +183,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
     */
 
+    
+
   @Override
   public void periodic() {
     SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
@@ -195,7 +198,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     //FIXME get odometer state shit fixed
 
-    odometer.update(getGyroscopeRotation(), m_frontLeftModule, m_frontRightModule, m_backLeftModule, m_backRightModule);
+    odometer.update(getGyroscopeRotation(), m_frontLeftModule.getSteerAngle(), m_frontRightModule.getSteerAngle(), m_backLeftModule.getSteerAngle(), m_backRightModule.getSteerAngle());
     
     SmartDashboard.putNumber("Robot Heading", m_navx.getFusedHeading());
     SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());

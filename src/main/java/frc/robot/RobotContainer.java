@@ -106,14 +106,14 @@ public class RobotContainer {
                 xController,
                 yController,
                 thetaController,
-                DrivetrainSubsystem::setModuleStates, //FIXME Doesnt exist yet
+                DrivetrainSubsystem::setModuleStates, //FIXME help
                 DrivetrainSubsystem); // this is fine, dont edit this line
 
       // 5. returns everything
       return new SequentialCommandGroup(
-        new InstantCommand(() -> DrivetrainSubsystem.resetOdometry(trajectory.getInitialPose())), //FIXME idek
+        new InstantCommand(() -> DrivetrainSubsystem.resetOdometry(trajectory.getInitialPose()) // i dont think this is actually broken?
         swerveControllerCommand,
-        new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  } //FIXME also doesnt exist
+        new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  } //FIXME doesnt exist
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

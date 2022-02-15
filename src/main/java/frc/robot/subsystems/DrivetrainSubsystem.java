@@ -9,15 +9,18 @@ import com.swervedrivespecialties.swervelib.SdsModuleConfigurations;
 import com.swervedrivespecialties.swervelib.SwerveModule;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 // import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static frc.robot.Constants.*;
@@ -51,7 +54,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
   public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = MAX_VELOCITY_METERS_PER_SECOND /
           Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0);
 
-  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+  public static final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
           // Front left
           new Translation2d(DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0),
           // Front right
@@ -67,6 +70,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
   // cause the angle reading to increase until it wraps back over to zero.
   private final AHRS m_navx = new AHRS(SPI.Port.kMXP, (byte) 200); // NavX connected over MXP
 
+  // new odometer object
+  private final SwerveDriveOdometry odometer = new SwerveDriveOdometry(m_kinematics, new Rotation2d(0));
+
   // These are our modules. We initialize them in the constructor.
   private final SwerveModule m_frontLeftModule;
   private final SwerveModule m_frontRightModule;
@@ -76,100 +82,105 @@ public class DrivetrainSubsystem extends SubsystemBase {
   private ChassisSpeeds m_chassisSpeeds = new ChassisSpeeds(0.0, 0.0, 0.0);
 
   public DrivetrainSubsystem() {
-    ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
+          ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
 
-    // There are 4 methods you can call to create your swerve modules.
-    // The method you use depends on what motors you are using.
-    //
-    // Mk4SwerveModuleHelper.createFalcon500(...)
-    //   Your module has two Falcon 500s on it. One for steering and one for driving.
-    //
-    // Mk4SwerveModuleHelper.createNeo(...)
-    //   Your module has two NEOs on it. One for steering and one for driving.
-    //
-    // Mk4SwerveModuleHelper.createFalcon500Neo(...)
-    //   Your module has a Falcon 500 and a NEO on it. The Falcon 500 is for driving and the NEO is for steering.
-    //
-    // Mk4SwerveModuleHelper.createNeoFalcon500(...)
-    //   Your module has a NEO and a Falcon 500 on it. The NEO is for driving and the Falcon 500 is for steering.
-    //
-    // Similar helpers also exist for Mk4 modules using the Mk4SwerveModuleHelper class.
+          // There are 4 methods you can call to create your swerve modules.
+          // The method you use depends on what motors you are using.
+          //
+          // Mk4SwerveModuleHelper.createFalcon500(...)
+          // Your module has two Falcon 500s on it. One for steering and one for driving.
+          //
+          // Mk4SwerveModuleHelper.createNeo(...)
+          // Your module has two NEOs on it. One for steering and one for driving.
+          //
+          // Mk4SwerveModuleHelper.createFalcon500Neo(...)
+          // Your module has a Falcon 500 and a NEO on it. The Falcon 500 is for driving
+          // and the NEO is for steering.
+          //
+          // Mk4SwerveModuleHelper.createNeoFalcon500(...)
+          // Your module has a NEO and a Falcon 500 on it. The NEO is for driving and the
+          // Falcon 500 is for steering.
+          //
+          // Similar helpers also exist for Mk4 modules using the Mk4SwerveModuleHelper
+          // class.
 
-    // By default we will use Falcon 500s in standard configuration. But if you use a different configuration or motors
-    // you MUST change it. If you do not, your code will crash on startup.
-    m_frontLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
-            // This parameter is optional, but will allow you to see the current state of the module on the dashboard.
-            tab.getLayout("Front Left Module", BuiltInLayouts.kList)
-                    .withSize(2, 4)
-                    .withPosition(0, 0),
-            // This can either be STANDARD or FAST depending on your gear configuration
-            Mk4SwerveModuleHelper.GearRatio.L4,
-            // This is the ID of the drive motor
-            FRONT_LEFT_MODULE_DRIVE_MOTOR,
-            // This is the ID of the steer motor
-            FRONT_LEFT_MODULE_STEER_MOTOR,
-            // This is the ID of the steer encoder
-            FRONT_LEFT_MODULE_STEER_ENCODER,
-            // This is how much the steer encoder is offset from true zero (In our case, zero is facing straight forward)
-            FRONT_LEFT_MODULE_STEER_OFFSET
-    );
+          // By default we will use Falcon 500s in standard configuration. But if you use
+          // a different configuration or motors
+          // you MUST change it. If you do not, your code will crash on startup.
+          m_frontLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
+                          // This parameter is optional, but will allow you to see the current state of
+                          // the module on the dashboard.
+                          tab.getLayout("Front Left Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(0, 0),
+                          // This can either be STANDARD or FAST depending on your gear configuration
+                          Mk4SwerveModuleHelper.GearRatio.L4,
+                          // This is the ID of the drive motor
+                          FRONT_LEFT_MODULE_DRIVE_MOTOR,
+                          // This is the ID of the steer motor
+                          FRONT_LEFT_MODULE_STEER_MOTOR,
+                          // This is the ID of the steer encoder
+                          FRONT_LEFT_MODULE_STEER_ENCODER,
+                          // This is how much the steer encoder is offset from true zero (In our case,
+                          // zero is facing straight forward)
+                          FRONT_LEFT_MODULE_STEER_OFFSET);
 
-    // We will do the same for the other modules
-    m_frontRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
-            tab.getLayout("Front Right Module", BuiltInLayouts.kList)
-                    .withSize(2, 4)
-                    .withPosition(2, 0),
-            Mk4SwerveModuleHelper.GearRatio.L4,
-            FRONT_RIGHT_MODULE_DRIVE_MOTOR,
-            FRONT_RIGHT_MODULE_STEER_MOTOR,
-            FRONT_RIGHT_MODULE_STEER_ENCODER,
-            FRONT_RIGHT_MODULE_STEER_OFFSET
-    );
+          // We will do the same for the other modules
+          m_frontRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
+                          tab.getLayout("Front Right Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(2, 0),
+                          Mk4SwerveModuleHelper.GearRatio.L4, FRONT_RIGHT_MODULE_DRIVE_MOTOR,
+                          FRONT_RIGHT_MODULE_STEER_MOTOR, FRONT_RIGHT_MODULE_STEER_ENCODER,
+                          FRONT_RIGHT_MODULE_STEER_OFFSET);
 
-    m_backLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
-            tab.getLayout("Back Left Module", BuiltInLayouts.kList)
-                    .withSize(2, 4)
-                    .withPosition(4, 0),
-            Mk4SwerveModuleHelper.GearRatio.L4,
-            BACK_LEFT_MODULE_DRIVE_MOTOR,
-            BACK_LEFT_MODULE_STEER_MOTOR,
-            BACK_LEFT_MODULE_STEER_ENCODER,
-            BACK_LEFT_MODULE_STEER_OFFSET
-    );
+          m_backLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
+                          tab.getLayout("Back Left Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(4, 0),
+                          Mk4SwerveModuleHelper.GearRatio.L4, BACK_LEFT_MODULE_DRIVE_MOTOR,
+                          BACK_LEFT_MODULE_STEER_MOTOR, BACK_LEFT_MODULE_STEER_ENCODER, BACK_LEFT_MODULE_STEER_OFFSET);
 
-    m_backRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
-            tab.getLayout("Back Right Module", BuiltInLayouts.kList)
-                    .withSize(2, 4)
-                    .withPosition(6, 0),
-            Mk4SwerveModuleHelper.GearRatio.L4,
-            BACK_RIGHT_MODULE_DRIVE_MOTOR,
-            BACK_RIGHT_MODULE_STEER_MOTOR,
-            BACK_RIGHT_MODULE_STEER_ENCODER,
-            BACK_RIGHT_MODULE_STEER_OFFSET
-    );
+          m_backRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
+                          tab.getLayout("Back Right Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(6, 0),
+                          Mk4SwerveModuleHelper.GearRatio.L4, BACK_RIGHT_MODULE_DRIVE_MOTOR,
+                          BACK_RIGHT_MODULE_STEER_MOTOR, BACK_RIGHT_MODULE_STEER_ENCODER,
+                          BACK_RIGHT_MODULE_STEER_OFFSET);
   }
 
   /**
-   * Sets the gyroscope angle to zero. This can be used to set the direction the robot is currently facing to the
-   * 'forwards' direction.
+   * Sets the gyroscope angle to zero. This can be used to set the direction the
+   * robot is currently facing to the 'forwards' direction.
    */
   public void zeroGyroscope() {
-        m_navx.zeroYaw();
+          m_navx.zeroYaw();
   }
 
   public Rotation2d getGyroscopeRotation() {
 
-    if (m_navx.isMagnetometerCalibrated()) {
-//      // We will only get valid fused headings if the magnetometer is calibrated
-      return Rotation2d.fromDegrees(m_navx.getFusedHeading());
-    }
-//    // We have to invert the angle of the NavX so that rotating the robot counter-clockwise makes the angle increase.
-    return Rotation2d.fromDegrees(360.0 - m_navx.getYaw());
+          if (m_navx.isMagnetometerCalibrated()) {
+                  // // We will only get valid fused headings if the magnetometer is calibrated
+                  return Rotation2d.fromDegrees(m_navx.getFusedHeading());
+          }
+          // // We have to invert the angle of the NavX so that rotating the robot
+          // counter-clockwise makes the angle increase.
+          return Rotation2d.fromDegrees(360.0 - m_navx.getYaw());
   }
 
   public void drive(ChassisSpeeds chassisSpeeds) {
-    m_chassisSpeeds = chassisSpeeds;
+          m_chassisSpeeds = chassisSpeeds;
   }
+
+  public Pose2d getPose() {
+          return odometer.getPoseMeters();
+  }
+
+  public void resetOdometry(Pose2d pose) {
+          odometer.resetPosition(pose, getGyroscopeRotation());
+  }
+
+  /*
+  public void stopModules() {
+        m_frontLeftModule.stop();
+        m_frontRightModule.stop();
+        m_backLeftModule.stop();
+        m_backRightModule.stop();
+    }
+    */
 
   @Override
   public void periodic() {
@@ -180,5 +191,14 @@ public class DrivetrainSubsystem extends SubsystemBase {
     m_frontRightModule.set(states[1].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[1].angle.getRadians());
     m_backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
     m_backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
+
+
+    //FIXME get odometer state shit fixed
+
+    odometer.update(getGyroscopeRotation(), m_frontLeftModule, m_frontRightModule, m_backLeftModule, m_backRightModule);
+    
+    SmartDashboard.putNumber("Robot Heading", m_navx.getFusedHeading());
+    SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
+
   }
 }

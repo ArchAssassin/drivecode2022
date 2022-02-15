@@ -4,12 +4,25 @@
 
 package frc.robot;
 
+import java.util.List;
+
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-// import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.geometry.Translation2d;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-// import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
@@ -65,9 +78,42 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An ExampleCommand will run in autonomous
-    return new InstantCommand();
-  }
+    // 1. Trajectory Settings
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
+     Constants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DrivetrainSubsystem.m_kinematics);
+
+     //2. generate trajectory
+     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(
+              new Translation2d(1, 0),
+              new Translation2d(1, -1)),
+      new Pose2d(2, -1, Rotation2d.fromDegrees(180)),
+      trajectoryConfig);
+
+      // 3. define PID controllers for tracking trajectory
+      PIDController xController = new PIDController(Constants.kPXController, 0, 0);
+      PIDController yController = new PIDController(Constants.kPYController, 0, 0);
+      ProfiledPIDController thetaController = new ProfiledPIDController(
+              Constants.kPThetaController, 0, 0, Constants.kThetaControllerConstraints);
+      thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+      // 4. Follow trajectory
+      SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
+                trajectory,
+                DrivetrainSubsystem::getPose,
+                DrivetrainSubsystem.m_kinematics,
+                xController,
+                yController,
+                thetaController,
+                DrivetrainSubsystem::setModuleStates, //FIXME Doesnt exist yet
+                DrivetrainSubsystem); // this is fine, dont edit this line
+
+      // 5. returns everything
+      return new SequentialCommandGroup(
+        new InstantCommand(() -> DrivetrainSubsystem.resetOdometry(trajectory.getInitialPose())), //FIXME idek
+        swerveControllerCommand,
+        new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  } //FIXME also doesnt exist
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

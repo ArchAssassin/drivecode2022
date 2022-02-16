@@ -172,14 +172,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
           odometer.resetPosition(pose, getGyroscopeRotation());
   }
     
-    SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
-    SwerveModuleState m_frontLeftModuleState = states[0];
-    SwerveModuleState m_frontRightModuleState = states[1];
-    SwerveModuleState m_backLeftModuleState = states[2];
-    SwerveModuleState m_backRightModuleState = states[3];
-
   @Override
   public void periodic() {
+    SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
     SwerveDriveKinematics.normalizeWheelSpeeds(states, MAX_VELOCITY_METERS_PER_SECOND);
 
     m_frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
@@ -188,10 +183,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
     m_backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
 
     odometer.update(getGyroscopeRotation(), 
-                m_frontLeftModuleState, 
-                m_frontRightModuleState, 
-                m_backLeftModuleState, 
-                m_backRightModuleState);
+                states[0], // front left module
+                states[1], // front right module
+                states[2], // back left module
+                states[3]); // back right module
     
     SmartDashboard.putNumber("Robot Heading", m_navx.getFusedHeading());
     SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());

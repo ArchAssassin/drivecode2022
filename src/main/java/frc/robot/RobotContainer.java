@@ -78,7 +78,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-   /*
+   
     // 1. Trajectory Settings
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
      Constants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DrivetrainSubsystem.m_kinematics);
@@ -107,17 +107,14 @@ public class RobotContainer {
                 xController,
                 yController,
                 thetaController,
-                DrivetrainSubsystem::setModuleStates, //FIXME Doesnt exist 
-                DrivetrainSubsystem); // this is fine, dont edit this line
+                SwerveModule.set(), //FIXME Doesnt exist 
+                DrivetrainSubsystem); // idk, its brokey
 
       // 5. returns everything
       return new SequentialCommandGroup(
         new InstantCommand(() -> DrivetrainSubsystem.resetOdometry(trajectory.getInitialPose()) // i dont think this is actually broken?
-        swerveControllerCommand,
+        swerveControllerCommand, //FIXME this will fix itself whem the object itself is fixed i think
         new InstantCommand(() -> DrivetrainSubsystem.stopModules()));  //FIXME doesnt exist
-      */
-
-      return null;
       } 
 
 

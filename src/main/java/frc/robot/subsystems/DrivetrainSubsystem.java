@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -109,37 +108,36 @@ public class DrivetrainSubsystem extends SubsystemBase {
           // a different configuration or motors
           // you MUST change it. If you do not, your code will crash on startup.
           m_frontLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
-                          // This parameter is optional, but will allow you to see the current state of
-                          // the module on the dashboard.
                           tab.getLayout("Front Left Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(0, 0),
-                          // This can either be STANDARD or FAST depending on your gear configuration
                           Mk4SwerveModuleHelper.GearRatio.L2,
-                          // This is the ID of the drive motor
                           FRONT_LEFT_MODULE_DRIVE_MOTOR,
-                          // This is the ID of the steer motor
                           FRONT_LEFT_MODULE_STEER_MOTOR,
-                          // This is the ID of the steer encoder
                           FRONT_LEFT_MODULE_STEER_ENCODER,
-                          // This is how much the steer encoder is offset from true zero (In our case,
-                          // zero is facing straight forward)
                           FRONT_LEFT_MODULE_STEER_OFFSET);
 
           // We will do the same for the other modules
           m_frontRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
                           tab.getLayout("Front Right Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(2, 0),
-                          Mk4SwerveModuleHelper.GearRatio.L2, FRONT_RIGHT_MODULE_DRIVE_MOTOR,
-                          FRONT_RIGHT_MODULE_STEER_MOTOR, FRONT_RIGHT_MODULE_STEER_ENCODER,
+                          Mk4SwerveModuleHelper.GearRatio.L2, 
+                          FRONT_RIGHT_MODULE_DRIVE_MOTOR,
+                          FRONT_RIGHT_MODULE_STEER_MOTOR, 
+                          FRONT_RIGHT_MODULE_STEER_ENCODER,
                           FRONT_RIGHT_MODULE_STEER_OFFSET);
 
           m_backLeftModule = Mk4SwerveModuleHelper.createFalcon500Neo(
                           tab.getLayout("Back Left Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(4, 0),
-                          Mk4SwerveModuleHelper.GearRatio.L2, BACK_LEFT_MODULE_DRIVE_MOTOR,
-                          BACK_LEFT_MODULE_STEER_MOTOR, BACK_LEFT_MODULE_STEER_ENCODER, BACK_LEFT_MODULE_STEER_OFFSET);
+                          Mk4SwerveModuleHelper.GearRatio.L2, 
+                          BACK_LEFT_MODULE_DRIVE_MOTOR,
+                          BACK_LEFT_MODULE_STEER_MOTOR, 
+                          BACK_LEFT_MODULE_STEER_ENCODER, 
+                          BACK_LEFT_MODULE_STEER_OFFSET);
 
           m_backRightModule = Mk4SwerveModuleHelper.createFalcon500Neo(
                           tab.getLayout("Back Right Module", BuiltInLayouts.kList).withSize(2, 4).withPosition(6, 0),
-                          Mk4SwerveModuleHelper.GearRatio.L2, BACK_RIGHT_MODULE_DRIVE_MOTOR,
-                          BACK_RIGHT_MODULE_STEER_MOTOR, BACK_RIGHT_MODULE_STEER_ENCODER,
+                          Mk4SwerveModuleHelper.GearRatio.L2, 
+                          BACK_RIGHT_MODULE_DRIVE_MOTOR,
+                          BACK_RIGHT_MODULE_STEER_MOTOR, 
+                          BACK_RIGHT_MODULE_STEER_ENCODER,
                           BACK_RIGHT_MODULE_STEER_OFFSET);
   }
 
@@ -173,21 +171,15 @@ public class DrivetrainSubsystem extends SubsystemBase {
   public void resetOdometry(Pose2d pose) {
           odometer.resetPosition(pose, getGyroscopeRotation());
   }
-
-  /*
-  public void stopModules() {
-        m_frontLeftModule.stop();
-        m_frontRightModule.stop();
-        m_backLeftModule.stop();
-        m_backRightModule.stop();
-    }
-    */
-
     
+    SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
+    SwerveModuleState m_frontLeftModuleState = states[0];
+    SwerveModuleState m_frontRightModuleState = states[1];
+    SwerveModuleState m_backLeftModuleState = states[2];
+    SwerveModuleState m_backRightModuleState = states[3];
 
   @Override
   public void periodic() {
-    SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
     SwerveDriveKinematics.normalizeWheelSpeeds(states, MAX_VELOCITY_METERS_PER_SECOND);
 
     m_frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
@@ -195,13 +187,14 @@ public class DrivetrainSubsystem extends SubsystemBase {
     m_backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
     m_backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
 
-
-    //FIXME get odometer state shit fixed
-
-   //  odometer.update(getGyroscopeRotation(), );
+    odometer.update(getGyroscopeRotation(), 
+                m_frontLeftModuleState, 
+                m_frontRightModuleState, 
+                m_backLeftModuleState, 
+                m_backRightModuleState);
     
-   // SmartDashboard.putNumber("Robot Heading", m_navx.getFusedHeading());
-   // SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
+    SmartDashboard.putNumber("Robot Heading", m_navx.getFusedHeading());
+    SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
 
   }
 }
